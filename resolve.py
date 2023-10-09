@@ -1,6 +1,7 @@
 import csv
 import json
-import codecs
+import logging
+import datetime
 
 SECURITY = ['аутентификация', 'Шифрование', 'Защита ', 'Безопасность', 'Конфиденциальность', 'данные ']
 REFUNDS = ['Возврат', 'операции', 'Компенсация', 'Возмещение', 'Возвращение', 'деньги  ', 'денег  ', 'средства',
@@ -13,6 +14,10 @@ LIMITS = ['Ограничение', 'Лимит', 'Максимум', 'Мини�
 PAYMENTS = ['Оплата ', 'Транзакция', 'Перевод', 'Платеж', 'Валюта', 'деньги  ', 'средства', 'денежные', 'денег  ']
 FEATURES = ['Возможность', 'Опции ', 'Сервисы', 'новое', 'функция', 'применение', 'применять']
 
+logging.basicConfig(filename='log_unknown_categories.log', encoding='utf-8', level=logging.WARNING, filemode='w')
+
+logger = logging.getLogger(__name__)
+
 
 def to_json(filename):
     def deco(func):
@@ -21,15 +26,16 @@ def to_json(filename):
             with open(filename, 'w', encoding='utf-8') as data:
                 json.dump(f, data, indent=4)
             return f
+
         return wrapper
 
     return deco
 
 
 @to_json('get.json')
-def sorted_categories():
+def sorted_categories(filename):
     result_json = {}
-    with open('test_task_python/user_support_letters.csv', 'r', encoding='utf-8') as data:
+    with open(filename, 'r', encoding='utf-8') as data:
         reader = csv.reader(data)
 
         for string in reader:
@@ -70,8 +76,12 @@ def sorted_categories():
                 result_json[string[0]] = (sort_dict[0][0][:3],)
                 if sort_dict[1][1]:
                     result_json[string[0]] = result_json[string[0]] + (sort_dict[1][0][:3],)
+            else:
+                result_json[string[0]] = (None,)
+                logger.warning(f' | Запрос не попал ни в одну категорию: {string[0]}\n{datetime.datetime.now()}')
+
     return result_json
 
 
 if __name__ == '__main__':
-    print(sorted_categories())
+    print(sorted_categories('test_task_python/user_support_letters.csv'))
